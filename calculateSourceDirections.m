@@ -8,7 +8,7 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 %   yRange              - listening area extent in y dimension, e.g. [-2 2]
 %   listenerOrientation - the orientation of the listener (in rad)
 %   imgSource           - the position of the image source, e.g. [0 0]
-%   brir                - the BRIR struct as obtained from 
+%   brir                - the BRIR struct created with brirStructCreator
 %   conf                - the SFS configuration file
 %
 % Outputs:
@@ -21,13 +21,13 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 %
 % Modified by:  Terpinas Stergios
 % Created:      27/02/2017
-% Last edit:    27/02/2017
+% Last edit:    28/02/2017
 %
 % Author:       Hagen Wierstorf
 % Based on:     wierstorf2013.m of
 %               amtoolbox [https://github.com/hagenw/amtoolbox]
 %
-% See also: 
+% See also: brirStructCreator.m
 %
 
 % The grid that contains the listening positions
@@ -59,13 +59,13 @@ for ii=1:length(x)
         position = ii + (reso-jj)*reso;
         
         % First loudspeaker
-        ir1(:,1) = brir.A0.left(:,position);
-        ir1(:,2) = brir.A0.right(:,position);
+        ir1(:,1) = brir{1}.left(:,position);
+        ir1(:,2) = brir{1}.right(:,position);
         sig1 = auralize_ir(ir1,sig_left,1,conf);
         
         % Second loudspeaker
-        ir2(:,1) = brir.A1.left(:,position);
-        ir2(:,2) = brir.A1.right(:,position);
+        ir2(:,1) = brir{2}.left(:,position);
+        ir2(:,2) = brir{2}.right(:,position);
         sig2 = auralize_ir(ir2,sig_right,1,conf);
         
         % Add the two signals and normalize
