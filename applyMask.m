@@ -13,16 +13,16 @@ function resultMatrix = applyMask(matrixToMask, criticalValue)
 %
 % Author:    Terpinas Stergios
 % Created:   27/02/2017
-% Last edit: 27/02/2017
+% Last edit: 03/03/2017
 %
-% See also:
+% See also: calculateSourceDirections.m calculateSweetSpot.m
 % 
 
 % Absolute values
 matrixToMask = abs(matrixToMask); 
 
 % Filter NaN values
-matrixToMask(isnan(matrixToMask)) = min(matrixToMask);
+matrixToMask(isnan(matrixToMask)) = min(min(matrixToMask));
 
 % Apply threshold
 matrixToMask(matrixToMask > criticalValue) = criticalValue;

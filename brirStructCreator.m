@@ -18,7 +18,7 @@ function brirStruct = brirStructCreator(rootPath,numSpeakers,numPositions,saveFi
 % Created:   27/02/2017
 % Last edit: 27/02/2017
 %
-% See also: calculateSourceDirections.m
+% See also: calculateSourceDirections.m calculateSweetSpot.m
 %
 
 % Check number of input arguments
