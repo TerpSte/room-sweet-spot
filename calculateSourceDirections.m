@@ -21,7 +21,7 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 %
 % Modified by:  Terpinas Stergios
 % Created:      27/02/2017
-% Last edit:    28/02/2017
+% Last edit:    05/03/2017
 %
 % Author:       Hagen Wierstorf
 % Based on:     wierstorf2013.m of
@@ -30,10 +30,14 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 % See also: brirStructCreator.m
 %
 
+% Load lookup table
+lookup = load(fullfile(amtbasepath, 'hrtf','wierstorf2013','wierstorf2013itd2anglelookup.mat'));
+
 % The grid that contains the listening positions
 [~,~,~,x,y] = xyz_grid(xRange,yRange,0,conf);
 
-% Obtain resolution
+% Obtain parameters
+fs = conf.fs;
 reso = conf.resolution;
 
 % 700 ms white noise burst as excitation signal
@@ -45,12 +49,14 @@ sig_right = sig_noise;
 wBar = waitbar(0,'Please wait while processing...');
 
 for ii=1:length(x)
-    % Update waitbar
-    waitbar((ii/length(x)), wBar);
-    
     for jj=1:length(y)
+        % Update waitbar
+        waitbarPosition = (ii-1)*reso + jj;
+        waitbar((waitbarPosition/(reso^2)), wBar);
+        drawnow();
+    
         % Position vector
-        X = [x(ii) y(jj) 0];
+        X = [x(ii) y(jj)];
         
         % Calculate current desired direction
         desiredDirection(ii,jj) = sourceDirection(X,listenerOrientation,imgSource);
@@ -78,6 +84,7 @@ for ii=1:length(x)
         % The localization error is the difference between the perceived
         % and the ideal direction of the audio source
         localizationError(ii,jj) = perceivedDirection(ii,jj)-desiredDirection(ii,jj);
+
     end
 end
 
@@ -88,7 +95,7 @@ end
 %% ----- Subfunctions ----------------------------------------------------
 function direction = sourceDirection(X,phi,xs)
     x = xs-X;
-    [direction,~,~] = cart2sph(x(1),x(2),x(3));
+    [direction,~] = cart2pol(x(1),x(2));
     direction = (direction-phi)/pi*180;
 end
 
