@@ -16,7 +16,7 @@ function brirStruct = brirStructCreator(rootPath,numSpeakers,numPositions,saveFi
 %
 % Author:    Terpinas Stergios
 % Created:   27/02/2017
-% Last edit: 27/02/2017
+% Last edit: 05/03/2017
 %
 % See also: calculateSourceDirections.m calculateSweetSpot.m
 %
@@ -44,7 +44,6 @@ for iSpeaker = 1:numSpeakers
     biggestFile = [speakerDirectory,filesep,brirFiles(maxIdx).name];
     someInfo = audioinfo(biggestFile);
     N = someInfo.TotalSamples;
-    delete biggestFile someInfo % Free variables not needed anymore
     
     % Initialize matrices for this speaker
     brirStruct{iSpeaker}.left = zeros(N,numPositions);
@@ -76,5 +75,5 @@ for iSpeaker = 1:numSpeakers
 end
 
 if saveFile
-    save brirStruct.m brirStruct
+    save brirStruct.mat brirStruct
 end
