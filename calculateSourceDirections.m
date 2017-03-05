@@ -30,6 +30,10 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 % See also: brirStructCreator.m
 %
 
+if nargin<6
+    error('Not enough input arguments!');
+end
+
 % Load lookup table
 lookup = load(fullfile(amtbasepath, 'hrtf','wierstorf2013','wierstorf2013itd2anglelookup.mat'));
 

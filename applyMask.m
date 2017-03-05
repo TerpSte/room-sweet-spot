@@ -18,6 +18,10 @@ function resultMatrix = applyMask(matrixToMask, criticalValue)
 % See also: calculateSourceDirections.m calculateSweetSpot.m
 % 
 
+if nargin<2
+    error('Not enough input arguments');
+end
+
 % Absolute values
 matrixToMask = abs(matrixToMask); 
 
