@@ -27,7 +27,7 @@ function outputStruct = calculateSweetSpot(xRange,yRange,resolution,varargin)
 %
 % Author:    Terpinas Stergios
 % Created:   28/02/2017
-% Last edit: 03/03/2017
+% Last edit: 05/03/2017
 %
 % See also: brirStructCreator.m calculateSourceDirections.m
 %
@@ -36,8 +36,8 @@ function outputStruct = calculateSweetSpot(xRange,yRange,resolution,varargin)
 p = inputParser;
 addRequired(p,'xRange',(@(x) (length(x)==2)&&isnumeric(x)));
 addRequired(p,'yRange',(@(x) (length(x)==2)&&isnumeric(x)));
-addRequired(p,'resolution',(@isinteger));
-addParameter(p,'brir','brirStruct.mat',(@isstring));
+addRequired(p,'resolution',(@(x) (x-round(x))==0));
+addParameter(p,'brir','brirStruct.mat',(@ischar));
 %addParameter(p,'sig',whitenoiseburst(44100),@isnumeric);
 addParameter(p,'phi',pi/2,(@(x) (x>-pi)&&(x<=pi)));
 addParameter(p,'img',[0 0],(@(x) (length(x)==2)&&isnumeric(x)));
@@ -48,16 +48,16 @@ addParameter(p,'doPlot',1,(@(x)(x==0)||(x==1)));
 parse(p,xRange,yRange,resolution,varargin{:});
 
 % Parse input
-brirPath = p.brir;
+brirPath = p.Results.brir;
 %excitationSignal = p.sig;
-listenerOrientation = p.phi;
-imgPosition = p.img;
-speakerDistance = p.L;
-critAngle = p.crit;
-doSave = p.doSave;
-doPlot = p.doPlot;
+listenerOrientation = p.Results.phi;
+imgPosition = p.Results.img;
+speakerDistance = p.Results.L;
+critAngle = p.Results.crit;
+doSave = p.Results.doSave;
+doPlot = p.Results.doPlot;
 
-% Load SFS config file
+% Load and set SFS config file
 try
     conf = SFS_config;
 catch ME
@@ -68,12 +68,13 @@ catch ME
                 'You can download it at https://github.com/sfstoolbox/sfs.\n']);
     end
 end
+conf.resolution = resolution;
 
 % Create brir if necessary
-if exist(brirPath,'directory')
+if exist(brirPath,'dir')
     brirStruct = brirStructCreator(brirPath,2,resolution^2,doSave);
 elseif exist(brirPath,'file')
-    load brirPath;
+    load(brirPath);
 else
     error('The BRIR file/or directory does not exist');
 end
@@ -102,8 +103,9 @@ if doPlot
     % Plot DOA
     figure;
     title('Directions of Arrivals');
-    [u,v,~] = pol2cart(rad(aud_event+90),ones(size(aud_event)),zeros(size(aud_event)));
-    quiver(xaxis,yaxis,u',v',0.5);
+    [u,v,~] = pol2cart(rad(perceivedDirection+90),ones(size(perceivedDirection)),...
+        zeros(size(perceivedDirection)));
+    quiver(x,y,u',v',0.5);
     axis([xRange yRange]);
     draw_loudspeakers(x0,[1 1 0],conf);
     xlabel('x/m');
@@ -121,9 +123,17 @@ end
 
 if doSave
     save sweetSpotResults.mat localizationError perceivedDirection...
-        desiredDirection x y sweetSpotArea 
+        desiredDirection x y sweetSpot sweetSpotArea 
 end
 
+% Build the output struct
+outputStruct.localizationError = localizationError;
+outputStruct.perceivedDirection = perceivedDirection;
+outputStruct.desiredDirection = desiredDirection;
+outputStruct.x = x;
+outputStruct.y = y;
+outputStruct.sweetSpot = sweetSpot;
+outputStruct.sweetSpotArea = sweetSpotArea;
 
 
 
