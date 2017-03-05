@@ -1,0 +1,4 @@
+# MATALB specific files
+*.asv
+*.mat
+*.fig
