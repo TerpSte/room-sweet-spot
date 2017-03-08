@@ -1,5 +1,5 @@
 function [localizationError,perceivedDirection,desiredDirection,x,y] =...
-    calculateSourceDirections(xRange,yRange,listenerOrientation,imgSource,brir,conf)
+    calculateSourceDirections(xRange,yRange,listenerOrientation,imgSource,brir,inputSignals,conf)
 % This function calculates the perceived and the ideal directions of the
 % sound that reaches the different listening positions of a listening area. 
 %
@@ -9,6 +9,7 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 %   listenerOrientation - the orientation of the listener (in rad)
 %   imgSource           - the position of the image source, e.g. [0 0]
 %   brir                - the BRIR struct created with brirStructCreator
+%   inputSignals        - the input excitation signals for each speaker
 %   conf                - the SFS configuration file
 %
 % Outputs:
@@ -21,7 +22,7 @@ function [localizationError,perceivedDirection,desiredDirection,x,y] =...
 %
 % Modified by:  Terpinas Stergios
 % Created:      27/02/2017
-% Last edit:    05/03/2017
+% Last edit:    08/03/2017
 %
 % Author:       Hagen Wierstorf
 % Based on:     wierstorf2013.m of
@@ -44,10 +45,8 @@ lookup = load(fullfile(amtbasepath, 'hrtf','wierstorf2013','wierstorf2013itd2ang
 fs = conf.fs;
 reso = conf.resolution;
 
-% 700 ms white noise burst as excitation signal
-sig_noise = whitenoiseburst(fs);
-sig_left = sig_noise;
-sig_right = sig_noise;
+% Number of speakers
+numSpeakers = size(inputSignals,2);
 
 % Initialize waitbar
 wBar = waitbar(0,'Please wait while processing...');
@@ -68,21 +67,21 @@ for ii=1:length(x)
         % Calculate current position in brir array
         position = ii + (reso-jj)*reso;
         
-        % First loudspeaker
-        ir1(:,1) = brir{1}.left(:,position);
-        ir1(:,2) = brir{1}.right(:,position);
-        sig1 = auralize_ir(ir1,sig_left,1,conf);
+        % Initialize received signals array
+        receivedSignals = zeros(length(inputSignals),2);
         
-        % Second loudspeaker
-        ir2(:,1) = brir{2}.left(:,position);
-        ir2(:,2) = brir{2}.right(:,position);
-        sig2 = auralize_ir(ir2,sig_right,1,conf);
+        % Get signals from each loudspeaker
+        for iSpeaker = 1:numSpeakers
+            ir(:,1) = brir{1}.left(:,position);
+            ir(:,2) = brir{1}.right(:,position);
+            receivedSignals = receivedSignals + auralize_ir(ir,inputSignals(:,iSpeaker),1,conf);
+        end
         
-        % Add the two signals and normalize
-        sig = (sig1+sig2)./2;
+        % Normalize
+        receivedSignals = receivedSignals./numSpeakers;
         
         % Estimate perceived direction using Dietz 2011 binaural model
-        perceivedDirection(ii,jj) = wierstorf2013estimateazimuth(sig,lookup, ...
+        perceivedDirection(ii,jj) = wierstorf2013estimateazimuth(receivedSignals,lookup, ...
             'dietz2011','no_spectral_weighting','remove_outlier');
         
         % The localization error is the difference between the perceived
