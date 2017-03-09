@@ -1,4 +1,4 @@
-function outputStruct = calculateSweetSpot(xRange,yRange,resolution,varargin)
+function outputStruct = calculateSweetSpot(setup,xRange,yRange,resolution,varargin)
 % This function calculates the sweet-spot of a set of speakers in a certain
 % room, given the binaural room impulse responses (BRIRs) at any position
 % of the listening area and the some other specifications. It is based on
@@ -8,10 +8,12 @@ function outputStruct = calculateSweetSpot(xRange,yRange,resolution,varargin)
 % is optional and can be used in a name-value pair manner.
 %
 % Inputs:
+%   setup       - the setup type; 'stereo' or 'surround'
 %   xRange      - extent of the listening area in x dimension (in m)
 %   yRange      - extent of the listening area in y dimension (in m)
 %   resolution  - resolution of the listening area grid
 %   brir        - full path to a BRIRs struct or directory
+%   sig         - input excitation signals for each speaker
 %   phi         - listeners orientation
 %   img         - position of the image source
 %   L           - distance of the speakers
@@ -27,35 +29,50 @@ function outputStruct = calculateSweetSpot(xRange,yRange,resolution,varargin)
 %
 % Author:    Terpinas Stergios
 % Created:   28/02/2017
-% Last edit: 05/03/2017
+% Last edit: 08/03/2017
 %
 % See also: brirStructCreator.m calculateSourceDirections.m
 %
 
 % Set parser
 p = inputParser;
+addRequired(p,'setup',@(x) any(validatestring(x,{'stereo','surround'})));
 addRequired(p,'xRange',(@(x) (length(x)==2)&&isnumeric(x)));
 addRequired(p,'yRange',(@(x) (length(x)==2)&&isnumeric(x)));
 addRequired(p,'resolution',(@(x) (x-round(x))==0));
 addParameter(p,'brir','brirStruct.mat',(@ischar));
-%addParameter(p,'sig',whitenoiseburst(44100),@isnumeric);
+addParameter(p,'sig',0,@isnumeric);
 addParameter(p,'phi',pi/2,(@(x) (x>-pi)&&(x<=pi)));
 addParameter(p,'img',[0 0],(@(x) (length(x)==2)&&isnumeric(x)));
 addParameter(p,'L',2,@isnumeric);
 addParameter(p,'crit',5,@isnumeric);
 addParameter(p,'doSave',1,(@(x)(x==0)||(x==1)));
 addParameter(p,'doPlot',1,(@(x)(x==0)||(x==1)));
-parse(p,xRange,yRange,resolution,varargin{:});
+parse(p,setup,xRange,yRange,resolution,varargin{:});
 
 % Parse input
 brirPath = p.Results.brir;
-%excitationSignal = p.sig;
+excitationSignal = p.sig;
 listenerOrientation = p.Results.phi;
 imgPosition = p.Results.img;
 speakerDistance = p.Results.L;
 critAngle = p.Results.crit;
 doSave = p.Results.doSave;
 doPlot = p.Results.doPlot;
+
+% Obtain number of speakers
+if strcmp(setup, 'stereo')
+    numSpeakers = 2;
+else % 'surround'
+    numSpeakers = 5;
+end
+
+% Check signal
+if excitationSignal==0          % The default value from input parser
+    excitationSignal = repmat(whitenoiseburst(44100),1,numSpeakers);
+elseif size(excitationSignal,2)~=numSpeakers
+    error('Incompatible input signal with input setup.');
+end    
 
 % Load and set SFS config file
 try
@@ -72,16 +89,21 @@ conf.resolution = resolution;
 
 % Create brir if necessary
 if exist(brirPath,'dir')
-    brirStruct = brirStructCreator(brirPath,2,resolution^2,doSave);
+    brirStruct = brirStructCreator(brirPath,numSpeakers,resolution^2,doSave);
 elseif exist(brirPath,'file')
     load(brirPath);
 else
     error('The BRIR file/or directory does not exist');
 end
 
+% Calculate image source position for surround setup
+if strcmp(setup,'surround')
+    imgPosition = pol2cartImgSource(imgPosition);
+end
+
 % Calculate all directions
 [localizationError,perceivedDirection,desiredDirection,x,y] =...
-    calculateSourceDirections(xRange,yRange,listenerOrientation,imgPosition,brirStruct,conf);
+    calculateSourceDirections(xRange,yRange,listenerOrientation,imgPosition,brirStruct,excitationSignal,conf);
     
 % Apply mask
 sweetSpot = applyMask(localizationError,critAngle);
@@ -134,6 +156,14 @@ outputStruct.x = x;
 outputStruct.y = y;
 outputStruct.sweetSpot = sweetSpot;
 outputStruct.sweetSpotArea = sweetSpotArea;
+
+end % calculateSweetSpot
+
+function cartImgSource = pol2cartImgSource(polarImgSource)
+    tempCoordinates = pol2cart(deg2rad(90 - polarImgSource(2)),polarImgSource(1));
+    stereoSurroundDistance = [0,polarImgSource(2)/(2*tand(30))];
+    cartImgSource = tempCoordinates - stereoSurroundDistance;
+end
 
 
 
