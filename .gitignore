@@ -2,3 +2,6 @@
 *.asv
 *.mat
 *.fig
+
+# Other folders
+/inputSignals
