@@ -5,7 +5,7 @@ function brirStruct = brirStructCreator(rootPath,numSpeakers,numPositions,saveFi
 % speaker/source, named only with its index, starting from 1 (1, 2, 3, ...)
 %
 % Inputs:
-%   rootPath     - the root path that contains the BRIR files
+%   rootPath     - the root path that contains the BRIR files (with ending /)
 %   numSpeakers  - the number of speakers/sources
 %   numPositions - the number of positions
 %   saveFile     - [optional] file save flag
@@ -16,7 +16,7 @@ function brirStruct = brirStructCreator(rootPath,numSpeakers,numPositions,saveFi
 %
 % Author:    Terpinas Stergios
 % Created:   27/02/2017
-% Last edit: 05/03/2017
+% Last edit: 15/03/2017
 %
 % See also: calculateSourceDirections.m calculateSweetSpot.m
 %
@@ -72,6 +72,30 @@ for iSpeaker = 1:numSpeakers
             iBRIR=iBRIR+1;
         end
     end
+end
+
+% Calculate the max effective length of the BRIRs
+for iSpeaker = 1:numSpeakers
+    addedBrirs = sum(brirStruct{iSpeaker}.left,2);
+    for idx = length(addedBrirs):-1:1
+        if addedBrirs(idx)~=0
+            effectiveLengths(2*iSpeaker-1)=idx;
+            break;
+        end
+    end
+    addedBrirs = sum(brirStruct{iSpeaker}.right,2);
+    for idx = length(addedBrirs):-1:1
+        if addedBrirs(idx)~=0
+            effectiveLengths(2*iSpeaker-1)=idx;
+            break;
+        end
+    end
+end
+maxEffectiveLength = max(effectiveLengths);
+
+for iSpeaker = 1:numSpeakers
+    brirStruct{iSpeaker}.left = brirStruct{iSpeaker}.left(1:maxEffectiveLength,:);
+    brirStruct{iSpeaker}.right = brirStruct{iSpeaker}.right(1:maxEffectiveLength,:);
 end
 
 if saveFile
