@@ -8,11 +8,11 @@ function outputStruct = calculateSweetSpot(setup,xRange,yRange,resolution,vararg
 % is optional and can be used in a name-value pair manner.
 %
 % Inputs:
-%   setup       - the setup type; 'stereo' or 'surround'
-%   xRange      - extent of the listening area in x dimension (in m)
-%   yRange      - extent of the listening area in y dimension (in m)
-%   resolution  - resolution of the listening area grid
-%   brir        - full path to a BRIRs struct or directory
+%   setup       - [REQUIRED] the setup type; 'stereo' or 'surround'
+%   xRange      - [REQUIRED] extent of the listening area in x dimension (in m)
+%   yRange      - [REQUIRED] extent of the listening area in y dimension (in m)
+%   resolution  - [REQUIRED] resolution of the listening area grid
+%   brir        - [REQUIRED] full path to a BRIRs struct or directory
 %   sig         - input excitation signals for each speaker
 %   phi         - listeners orientation
 %   img         - position of the image source
@@ -52,7 +52,7 @@ parse(p,setup,xRange,yRange,resolution,varargin{:});
 
 % Parse input
 brirPath = p.Results.brir;
-excitationSignal = p.sig;
+excitationSignal = p.Results.sig;
 listenerOrientation = p.Results.phi;
 imgPosition = p.Results.img;
 speakerDistance = p.Results.L;
@@ -93,7 +93,7 @@ if exist(brirPath,'dir')
 elseif exist(brirPath,'file')
     load(brirPath);
 else
-    error('The BRIR file/or directory does not exist');
+    error('The BRIR file/directory does not exist');
 end
 
 % Calculate image source position for surround setup
@@ -160,9 +160,9 @@ outputStruct.sweetSpotArea = sweetSpotArea;
 end % calculateSweetSpot
 
 function cartImgSource = pol2cartImgSource(polarImgSource)
-    tempCoordinates = pol2cart(deg2rad(90 - polarImgSource(2)),polarImgSource(1));
+    [tempCoordinates(1), tempCoordinates(2)] = pol2cart(deg2rad(90 - polarImgSource(1)),polarImgSource(2));
     stereoSurroundDistance = [0,polarImgSource(2)/(2*tand(30))];
-    cartImgSource = tempCoordinates - stereoSurroundDistance;
+    cartImgSource = -tempCoordinates + stereoSurroundDistance;
 end
 
 

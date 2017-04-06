@@ -68,12 +68,12 @@ for ii=1:length(x)
         position = ii + (reso-jj)*reso;
         
         % Initialize received signals array
-        receivedSignals = zeros(length(inputSignals),2);
+        receivedSignals = zeros(length(inputSignals)+size(brir{1}.left,1)-1,2);
         
         % Get signals from each loudspeaker
         for iSpeaker = 1:numSpeakers
-            ir(:,1) = brir{1}.left(:,position);
-            ir(:,2) = brir{1}.right(:,position);
+            ir(:,1) = brir{iSpeaker}.left(:,position);
+            ir(:,2) = brir{iSpeaker}.right(:,position);
             receivedSignals = receivedSignals + auralize_ir(ir,inputSignals(:,iSpeaker),1,conf);
         end
         
