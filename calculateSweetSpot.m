@@ -12,10 +12,10 @@ function outputStruct = calculateSweetSpot(setup,xRange,yRange,resolution,vararg
 %   xRange      - [REQUIRED] extent of the listening area in x dimension (in m)
 %   yRange      - [REQUIRED] extent of the listening area in y dimension (in m)
 %   resolution  - [REQUIRED] resolution of the listening area grid
-%   brir        - [REQUIRED] full path to a BRIRs struct or directory
+%   brir        - full path to a BRIRs struct or directory
 %   sig         - input excitation signals for each speaker
 %   phi         - listeners orientation
-%   img         - position of the image source
+%   img         - position of the image source (cartesian or polar acc. to setup)
 %   L           - distance of the speakers
 %   crit        - critical angle of the sweet-spot mask
 %   doSave      - save flag
